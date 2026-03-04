@@ -5,22 +5,15 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
-import { authenticate, USAGE_PLAN } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { billing } = await authenticate.admin(request);
+  await authenticate.admin(request);
 
-  try {
-    await billing.require({
-      plans: [USAGE_PLAN],
-      onFailure: async () => billing.request({ plan: USAGE_PLAN }),
-    });
-  } catch {
-    // Billing no disponible en dev stores / custom apps — skip
-    console.log("Billing not available for this store, skipping");
-  }
+  // Billing se activa automáticamente cuando la app se instala desde el App Store
+  // En dev stores / custom apps no funciona, así que no lo forzamos en el loader
 
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
 };
