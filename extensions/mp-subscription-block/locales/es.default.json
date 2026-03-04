@@ -1,0 +1,14 @@
+{
+  "mp_subscription": {
+    "name": "MP Suscripcion",
+    "loading": "Cargando planes de suscripcion...",
+    "no_plans": "No hay planes de suscripcion disponibles.",
+    "subscribe": "Suscribirme",
+    "processing": "Procesando...",
+    "email_placeholder": "Tu email para la suscripcion",
+    "email_error": "Ingresa un email valido.",
+    "plan_error": "Selecciona un plan.",
+    "connection_error": "Error de conexion. Intenta de nuevo.",
+    "error": "Error al crear la suscripcion."
+  }
+}

@@ -1,0 +1,492 @@
+{% comment %}
+  MP Subscription Block - Grüns-style design with shipping modal
+{% endcomment %}
+
+<div id="mp-subscription-block"
+  data-shop="{{ shop.permanent_domain }}"
+  data-app-url="{{ block.settings.app_url }}"
+  data-product-title="{{ product.title | escape }}"
+  data-product-id="{{ product.id }}"
+  data-product-price="{{ product.price | money_without_currency }}"
+  data-variant-id="{{ product.selected_or_first_available_variant.id }}">
+  <div class="mps-loading">Cargando opciones...</div>
+</div>
+
+<style>
+  #mp-subscription-block {
+    margin: {{ block.settings.margin_top }}px 0 {{ block.settings.margin_bottom }}px;
+    font-family: inherit;
+    max-width: 500px;
+  }
+  .mps-loading { color: #555; font-size: 14px; padding: 16px 0; }
+  .mps-load-error { color: #d72c0d; font-size: 14px; padding: 16px 0; }
+
+  /* Section title */
+  .mps-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: {{ block.settings.text_color }};
+  }
+
+  /* Plan cards */
+  .mps-plan {
+    border: 2px solid #e1e1e1;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: #fff;
+  }
+  .mps-plan:hover { border-color: {{ block.settings.accent_color }}; }
+  .mps-plan.selected {
+    border-color: {{ block.settings.accent_color }};
+    background: {{ block.settings.accent_color }}10;
+  }
+  .mps-plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .mps-plan-left { display: flex; align-items: flex-start; gap: 10px; flex: 1; }
+  .mps-radio {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid #ccc; margin-top: 2px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mps-plan.selected .mps-radio {
+    border-color: {{ block.settings.accent_color }};
+  }
+  .mps-radio-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: {{ block.settings.accent_color }};
+    display: none;
+  }
+  .mps-plan.selected .mps-radio-dot { display: block; }
+  .mps-plan-name { font-weight: 700; font-size: 16px; color: #111; }
+  .mps-plan-desc { font-size: 13px; color: #555; margin-top: 2px; }
+  .mps-plan-right { text-align: right; flex-shrink: 0; }
+  .mps-plan-price { font-weight: 800; font-size: 20px; color: #111; }
+  .mps-plan-original {
+    font-size: 13px; color: #999;
+    text-decoration: line-through; margin-left: 4px;
+  }
+  .mps-plan-daily { font-size: 12px; color: #555; }
+
+  /* Discount badge */
+  .mps-badge {
+    position: absolute; top: -10px; right: 12px;
+    background: {{ block.settings.accent_color }};
+    color: #fff; font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 4px;
+  }
+
+  /* One-time purchase card */
+  .mps-onetime {
+    border: 2px solid #e1e1e1;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 16px;
+    cursor: pointer;
+    background: #f8f8f8;
+    transition: all 0.2s;
+  }
+  .mps-onetime:hover { border-color: #999; }
+  .mps-onetime.selected {
+    border-color: {{ block.settings.accent_color }};
+    background: {{ block.settings.accent_color }}08;
+  }
+  .mps-onetime-cons {
+    display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: #c00;
+  }
+
+  /* CTA Button */
+  .mps-cta {
+    width: 100%; padding: 16px; margin-top: 16px;
+    background: {{ block.settings.button_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none; border-radius: 10px;
+    font-size: 17px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .mps-cta:hover { opacity: 0.9; }
+  .mps-cta:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .mps-trust {
+    text-align: center; margin-top: 10px;
+    font-size: 12px; color: #777;
+  }
+
+  /* Modal overlay */
+  .mps-overlay {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    z-index: 99999; align-items: center; justify-content: center;
+  }
+  .mps-overlay.open { display: flex; }
+
+  .mps-modal {
+    background: #fff; border-radius: 14px; padding: 28px;
+    max-width: 440px; width: 90%; max-height: 85vh;
+    max-height: 85dvh;
+    overflow-y: auto; position: relative;
+  }
+  .mps-modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .mps-modal-subtitle { font-size: 14px; color: #555; margin-bottom: 20px; }
+  .mps-modal-close {
+    position: absolute; top: 14px; right: 18px;
+    background: none; border: none; font-size: 22px;
+    cursor: pointer; color: #999; line-height: 1;
+  }
+  .mps-field { margin-bottom: 14px; }
+  .mps-field label {
+    display: block; font-size: 13px; font-weight: 600;
+    margin-bottom: 4px; color: #333;
+  }
+  .mps-field input {
+    width: 100%; padding: 11px 14px; border: 1px solid #ddd;
+    border-radius: 8px; font-size: 15px; box-sizing: border-box;
+  }
+  .mps-field input:focus { outline: none; border-color: {{ block.settings.accent_color }}; box-shadow: 0 0 0 1px {{ block.settings.accent_color }}; }
+  .mps-field-row { display: flex; gap: 10px; }
+  .mps-field-row .mps-field { flex: 1; }
+  .mps-error { color: #d72c0d; font-size: 13px; margin-bottom: 10px; min-height: 18px; }
+
+  @media (max-width: 480px) {
+    .mps-field-row { flex-direction: column; gap: 0; }
+    .mps-modal { padding: 20px; width: 95%; }
+  }
+</style>
+
+<script>
+(function() {
+  var container = document.getElementById('mp-subscription-block');
+  var shop = container.dataset.shop;
+  var appUrl = (container.dataset.appUrl || '').replace(/\/+$/, '');
+  var productTitle = container.dataset.productTitle;
+  var variantId = container.dataset.variantId;
+
+  if (!appUrl) {
+    container.innerHTML = '<p class="mps-load-error">Configura la App URL en los ajustes del bloque.</p>';
+    return;
+  }
+
+  /* Escape HTML to prevent XSS from API data */
+  function esc(str) {
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  var selectedPlanId = null;
+  var selectedType = 'onetime';
+  var plansData = null;
+
+  fetch(appUrl + '/api/subscription?shop=' + encodeURIComponent(shop))
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data.plans || data.plans.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      plansData = data.plans;
+      var html = '';
+
+      /* Subscription plans */
+      html += '<div class="mps-title">{{ block.settings.section_title }}</div>';
+
+      data.plans.forEach(function(plan) {
+        var disc = plan.originalPrice > 0
+          ? Math.round((1 - plan.amount / plan.originalPrice) * 100) : 0;
+        var freqMap = { days: 'dias', weeks: 'semanas', months: 'mes', years: 'ano' };
+        var freqLabel = 'cada ' + plan.frequency + ' ' + (freqMap[plan.frequencyType] || esc(plan.frequencyType));
+
+        html += '<div class="mps-plan" data-plan-id="' + esc(plan.id) + '" data-type="subscription" role="radio" aria-checked="false" tabindex="0">';
+        if (disc > 0) html += '<div class="mps-badge">' + disc + '% OFF</div>';
+        html += '<div class="mps-plan-header">';
+        html += '<div class="mps-plan-left">';
+        html += '<div class="mps-radio" aria-hidden="true"><div class="mps-radio-dot"></div></div>';
+        html += '<div><div class="mps-plan-name">' + esc(plan.name) + '</div>';
+        html += '<div class="mps-plan-desc">' + esc(plan.description || (plan.quantity + ' un. ' + freqLabel)) + '</div></div>';
+        html += '</div>';
+        html += '<div class="mps-plan-right">';
+        html += '<div class="mps-plan-price">$' + plan.amount.toLocaleString() + '<span style="font-size:14px;font-weight:400">/' + (plan.frequencyType === 'months' ? 'mes' : esc(freqLabel)) + '</span></div>';
+        if (plan.originalPrice > 0) html += '<div class="mps-plan-original">$' + plan.originalPrice.toLocaleString() + '</div>';
+        html += '</div></div></div>';
+      });
+
+      /* One-time purchase */
+      html += '<div class="mps-onetime selected" data-type="onetime" role="radio" aria-checked="true" tabindex="0">';
+      html += '<div class="mps-plan-header">';
+      html += '<div class="mps-plan-left">';
+      html += '<div class="mps-radio" aria-hidden="true"><div class="mps-radio-dot"></div></div>';
+      html += '<div><div class="mps-plan-name">{{ block.settings.onetime_title }}</div>';
+      html += '<div class="mps-plan-desc">Entrega unica</div></div>';
+      html += '</div>';
+      html += '<div class="mps-plan-right">';
+      html += '<div class="mps-plan-price">' + esc(container.dataset.productPrice || '') + '</div>';
+      html += '</div></div>';
+      html += '<div class="mps-onetime-cons">';
+      html += '<span>&#10005; {{ block.settings.onetime_con1 }}</span>';
+      html += '<span>&#10005; {{ block.settings.onetime_con2 }}</span>';
+      html += '</div></div>';
+
+      /* CTA */
+      html += '<button class="mps-cta" id="mps-cta">{{ block.settings.onetime_button }}</button>';
+      html += '<div class="mps-trust">&#128274; {{ block.settings.trust_text }}</div>';
+
+      /* Modal */
+      html += '<div class="mps-overlay" id="mps-overlay" role="dialog" aria-modal="true" aria-label="Datos de envio">';
+      html += '<div class="mps-modal">';
+      html += '<button class="mps-modal-close" id="mps-modal-close" aria-label="Cerrar">&#10005;</button>';
+      html += '<div class="mps-modal-title" id="mps-modal-plan-name"></div>';
+      html += '<div class="mps-modal-subtitle" id="mps-modal-plan-desc"></div>';
+      html += '<div class="mps-error" id="mps-modal-error" role="alert"></div>';
+      html += '<div class="mps-field"><label for="mps-email">Email *</label><input type="email" id="mps-email" placeholder="tu@email.com" autocomplete="email" required></div>';
+      html += '<div class="mps-field"><label for="mps-name">Nombre completo *</label><input type="text" id="mps-name" placeholder="Juan Perez" autocomplete="name" required></div>';
+      html += '<div class="mps-field"><label for="mps-address">Direccion *</label><input type="text" id="mps-address" placeholder="Av. Corrientes 1234, Piso 3" autocomplete="street-address" required></div>';
+      html += '<div class="mps-field-row">';
+      html += '<div class="mps-field"><label for="mps-city">Ciudad *</label><input type="text" id="mps-city" placeholder="CABA" autocomplete="address-level2" required></div>';
+      html += '<div class="mps-field"><label for="mps-province">Provincia</label><input type="text" id="mps-province" placeholder="Buenos Aires" autocomplete="address-level1"></div>';
+      html += '</div>';
+      html += '<div class="mps-field-row">';
+      html += '<div class="mps-field"><label for="mps-postal">Codigo postal</label><input type="text" id="mps-postal" placeholder="1043" autocomplete="postal-code"></div>';
+      html += '<div class="mps-field"><label for="mps-phone">Telefono</label><input type="tel" id="mps-phone" placeholder="11-5555-1234" autocomplete="tel"></div>';
+      html += '</div>';
+      html += '<button class="mps-cta" id="mps-modal-submit">{{ block.settings.subscribe_button }}</button>';
+      html += '<div class="mps-trust" style="margin-top:12px">&#128274; Pago seguro via MercadoPago. Cancela cuando quieras.</div>';
+      html += '</div></div>';
+
+      container.innerHTML = html;
+
+      /* Selection logic */
+      var allCards = container.querySelectorAll('.mps-plan, .mps-onetime');
+      var cta = document.getElementById('mps-cta');
+
+      function selectCard(el) {
+        allCards.forEach(function(c) {
+          c.classList.remove('selected');
+          c.setAttribute('aria-checked', 'false');
+        });
+        el.classList.add('selected');
+        el.setAttribute('aria-checked', 'true');
+
+        if (el.dataset.type === 'subscription') {
+          selectedType = 'subscription';
+          selectedPlanId = el.dataset.planId;
+          cta.textContent = '{{ block.settings.subscribe_button }}';
+        } else {
+          selectedType = 'onetime';
+          selectedPlanId = null;
+          cta.textContent = '{{ block.settings.onetime_button }}';
+        }
+      }
+
+      allCards.forEach(function(el) {
+        el.addEventListener('click', function() { selectCard(el); });
+        el.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCard(el); }
+        });
+      });
+
+      /* CTA click */
+      cta.addEventListener('click', function() {
+        if (selectedType === 'onetime') {
+          var formEl = document.querySelector('form[action="/cart/add"]');
+          if (formEl) {
+            formEl.submit();
+          } else {
+            window.location.href = '/cart/add?id=' + encodeURIComponent(variantId) + '&quantity=1';
+          }
+        } else {
+          if (!plansData) return;
+          var plan = plansData.find(function(p) { return p.id === selectedPlanId; });
+          if (!plan) return;
+          document.getElementById('mps-modal-plan-name').textContent = plan.name + ' - ' + productTitle;
+          var freqMap2 = { months: 'mes', days: 'dias', weeks: 'semanas' };
+          document.getElementById('mps-modal-plan-desc').textContent = '$' + plan.amount.toLocaleString() + '/' + (freqMap2[plan.frequencyType] || plan.frequencyType) + ' · ' + plan.quantity + ' un.';
+          document.getElementById('mps-overlay').classList.add('open');
+          document.getElementById('mps-email').focus();
+        }
+      });
+
+      /* Modal close */
+      function closeModal() {
+        document.getElementById('mps-overlay').classList.remove('open');
+        document.getElementById('mps-modal-error').textContent = '';
+      }
+
+      document.getElementById('mps-modal-close').addEventListener('click', closeModal);
+      document.getElementById('mps-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('mps-overlay').classList.contains('open')) {
+          closeModal();
+        }
+      });
+
+      /* Modal submit */
+      document.getElementById('mps-modal-submit').addEventListener('click', function() {
+        var errorEl = document.getElementById('mps-modal-error');
+        var btn = this;
+        errorEl.textContent = '';
+
+        var email = document.getElementById('mps-email').value.trim();
+        var name = document.getElementById('mps-name').value.trim();
+        var address = document.getElementById('mps-address').value.trim();
+        var city = document.getElementById('mps-city').value.trim();
+        var province = document.getElementById('mps-province').value.trim();
+        var postal = document.getElementById('mps-postal').value.trim();
+        var phone = document.getElementById('mps-phone').value.trim();
+
+        /* Validation */
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.textContent = 'Ingresa un email valido.'; document.getElementById('mps-email').focus(); return; }
+        if (!name || name.length < 2) { errorEl.textContent = 'Ingresa tu nombre completo.'; document.getElementById('mps-name').focus(); return; }
+        if (!address) { errorEl.textContent = 'Ingresa tu direccion de envio.'; document.getElementById('mps-address').focus(); return; }
+        if (!city) { errorEl.textContent = 'Ingresa tu ciudad.'; document.getElementById('mps-city').focus(); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Procesando...';
+
+        fetch(appUrl + '/api/subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            planId: selectedPlanId,
+            shop: shop,
+            email: email,
+            name: name,
+            phone: phone,
+            address: address,
+            city: city,
+            province: province,
+            postalCode: postal,
+            productTitle: productTitle,
+            appUrl: appUrl
+          })
+        })
+        .then(function(r) {
+          if (!r.ok) return r.json().then(function(err) { throw new Error(err.error || 'Error del servidor'); });
+          return r.json();
+        })
+        .then(function(result) {
+          if (result.initPoint) {
+            window.location.href = result.initPoint;
+          } else {
+            errorEl.textContent = result.error || 'Error al crear la suscripcion.';
+            btn.disabled = false;
+            btn.textContent = '{{ block.settings.subscribe_button }}';
+          }
+        })
+        .catch(function(err) {
+          errorEl.textContent = err.message || 'Error de conexion. Intenta de nuevo.';
+          btn.disabled = false;
+          btn.textContent = '{{ block.settings.subscribe_button }}';
+        });
+      });
+    })
+    .catch(function() {
+      container.innerHTML = '<p class="mps-load-error">No se pudieron cargar las opciones de suscripcion.</p>';
+    });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "MP Suscripcion",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "app_url",
+      "label": "App URL",
+      "info": "URL de tu app (ej: https://xxx.trycloudflare.com)"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Titulo de la seccion",
+      "default": "Suscribite y Ahorra"
+    },
+    {
+      "type": "text",
+      "id": "subscribe_button",
+      "label": "Texto boton suscripcion",
+      "default": "SUSCRIBIRME Y PAGAR"
+    },
+    {
+      "type": "text",
+      "id": "onetime_button",
+      "label": "Texto boton compra unica",
+      "default": "AGREGAR AL CARRITO"
+    },
+    {
+      "type": "text",
+      "id": "onetime_title",
+      "label": "Titulo compra unica",
+      "default": "Compra Unica"
+    },
+    {
+      "type": "text",
+      "id": "onetime_con1",
+      "label": "Contra 1 de compra unica",
+      "default": "Sin envio gratis ni descuento"
+    },
+    {
+      "type": "text",
+      "id": "onetime_con2",
+      "label": "Contra 2 de compra unica",
+      "default": "Proximo pedido a precio completo"
+    },
+    {
+      "type": "text",
+      "id": "trust_text",
+      "label": "Texto de confianza",
+      "default": "Pago seguro. Cancela cuando quieras."
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Color de acento",
+      "default": "#2E7D32"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Color del texto",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Color del boton",
+      "default": "#2E7D32"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Color texto del boton",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "label": "Margen superior",
+      "min": 0, "max": 60, "step": 4, "default": 20
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Margen inferior",
+      "min": 0, "max": 60, "step": 4, "default": 20
+    }
+  ]
+}
+{% endschema %}

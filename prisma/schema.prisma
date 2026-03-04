@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model Settings {
+  id            String @id @default(cuid())
+  shop          String @unique
+  mpAccessToken String
+  mpPublicKey   String
+  webhookSecret String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Plan {
+  id                  String         @id @default(cuid())
+  shop                String
+  name                String
+  description         String         @default("")
+  amount              Float
+  originalPrice       Float          @default(0)
+  quantity            Int            @default(1)
+  currency            String         @default("ARS")
+  frequencyType       String         @default("months")
+  frequency           Int            @default(1)
+  trialDays           Int            @default(0)
+  sellingPlanId       String?
+  sellingPlanGroupId  String?
+  productId           String?
+  active              Boolean        @default(true)
+  subscriptions       Subscription[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([shop, active])
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  shop              String
+  planId            String
+  plan              Plan     @relation(fields: [planId], references: [id])
+  shopifyCustomerId String?
+  shopifyOrderId    String?
+  mpPreapprovalId   String?
+  mpInitPoint       String?
+  status            String   @default("pending")
+  payerEmail        String
+  payerName         String   @default("")
+  payerPhone        String   @default("")
+  shippingAddress   String   @default("")
+  shippingCity      String   @default("")
+  shippingProvince  String   @default("")
+  shippingPostalCode String  @default("")
+  nextBillingDate   DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([shop])
+  @@index([mpPreapprovalId])
+  @@index([status])
+}

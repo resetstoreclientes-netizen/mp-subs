@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "skills": {
+    "bencium-innovative-ux-designer": {
+      "source": "bencium/bencium-claude-code-design-skill",
+      "sourceType": "github",
+      "computedHash": "a535e501e9f72e0de2d43546104f98b596119f8bbea1df915579b26da08d792d"
+    },
+    "code-reviewer": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "38c6f682e04102f38ccc8c5ee4edd79c0a3e66ba2cbd61f810b346cb5b0f1223"
+    },
+    "elite-longterm-memory": {
+      "source": "nextfrontierbuilds/elite-longterm-memory",
+      "sourceType": "github",
+      "computedHash": "50dcc7b9076c9326d1898ebb5e2ebf0ce4ee4e4b24789418eee1d1e3cd087714"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "computedHash": "6412eb4eb3b91595ebab937f0c69501240e7ba761b3d82510b5cf506ec5c7adc"
+    },
+    "frontend-ui-ux-engineer": {
+      "source": "404kidwiz/claude-supercode-skills",
+      "sourceType": "github",
+      "computedHash": "074176a7c86baeea322124c5d3dd0104561d752ca408ff994ae742b61c19ca66"
+    },
+    "self-improving-agent": {
+      "source": "charon-fan/agent-playbook",
+      "sourceType": "github",
+      "computedHash": "3e5969b9121d131abfc31e105d38ca025fd7a0b03dcede2a0959c35e37487b4b"
+    },
+    "shopify-development": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "370a326a1a31504b3f1537372fc5c16ed7cfa4070815991b9b31a318aa1444f3"
+    },
+    "shopify-liquid-themes": {
+      "source": "benjaminsehl/liquid-skills",
+      "sourceType": "github",
+      "computedHash": "ffbd442951b3c06c451d4fa39a7b7cc0dea3618976bdb87508621e7c561eabe7"
+    }
+  }
+}
