@@ -29,7 +29,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { planId, shop, email, name, phone, address, city, province, postalCode, productTitle, appUrl } = body;
 
-  if (!planId || !shop || !email || !name || !address || !city) {
+  if (!planId || !shop || !email || !name) {
     return json({ error: "Faltan datos obligatorios" }, { status: 400, headers: corsHeaders });
   }
 

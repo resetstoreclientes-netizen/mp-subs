@@ -1,5 +1,5 @@
 {% comment %}
-  MP Subscription Block - Grüns-style design with shipping modal
+  MP Subscription Block - Premium design with configurable shipping modal
 {% endcomment %}
 
 <div id="mp-subscription-block"
@@ -8,7 +8,18 @@
   data-product-title="{{ product.title | escape }}"
   data-product-id="{{ product.id }}"
   data-product-price="{{ product.price | money_without_currency }}"
-  data-variant-id="{{ product.selected_or_first_available_variant.id }}">
+  data-variant-id="{{ product.selected_or_first_available_variant.id }}"
+  data-show-address="{{ block.settings.show_address }}"
+  data-show-city="{{ block.settings.show_city }}"
+  data-show-phone="{{ block.settings.show_phone }}"
+  data-show-province="{{ block.settings.show_province }}"
+  data-show-postal="{{ block.settings.show_postal }}"
+  data-modal-bg="{{ block.settings.modal_bg_color }}"
+  data-modal-overlay="{{ block.settings.modal_overlay_color }}"
+  data-modal-title="{{ block.settings.modal_title }}"
+  data-modal-subtitle="{{ block.settings.modal_subtitle }}"
+  data-modal-radius="{{ block.settings.modal_border_radius }}"
+  data-input-radius="{{ block.settings.input_border_radius }}">
   <div class="mps-loading">Cargando opciones...</div>
 </div>
 
@@ -119,44 +130,181 @@
     font-size: 12px; color: #777;
   }
 
-  /* Modal overlay */
+  /* Modal overlay — fade-in */
   .mps-overlay {
     display: none; position: fixed; top: 0; left: 0;
-    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    width: 100%; height: 100%;
     z-index: 99999; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
   }
   .mps-overlay.open { display: flex; }
+  .mps-overlay.visible { opacity: 1; }
 
+  /* Modal — slide-up */
   .mps-modal {
-    background: #fff; border-radius: 14px; padding: 28px;
-    max-width: 440px; width: 90%; max-height: 85vh;
+    background: #fff;
+    padding: 28px;
+    max-width: 480px; width: 92%;
+    max-height: 85vh;
     max-height: 85dvh;
     overflow-y: auto; position: relative;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
   }
-  .mps-modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .mps-overlay.visible .mps-modal {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Plan summary card */
+  .mps-modal-summary {
+    border: 1.5px solid {{ block.settings.accent_color }}30;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    background: {{ block.settings.accent_color }}08;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .mps-modal-summary-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .mps-modal-summary-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #111;
+  }
+  .mps-modal-summary-freq {
+    font-size: 13px;
+    color: #555;
+  }
+  .mps-modal-summary-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .mps-modal-summary-price {
+    font-weight: 800;
+    font-size: 18px;
+    color: #111;
+  }
+  .mps-modal-summary-original {
+    font-size: 12px;
+    color: #999;
+    text-decoration: line-through;
+  }
+  .mps-modal-summary-badge {
+    display: inline-block;
+    background: {{ block.settings.accent_color }};
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+
+  .mps-modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; color: #111; }
   .mps-modal-subtitle { font-size: 14px; color: #555; margin-bottom: 20px; }
   .mps-modal-close {
     position: absolute; top: 14px; right: 18px;
     background: none; border: none; font-size: 22px;
     cursor: pointer; color: #999; line-height: 1;
+    width: 32px; height: 32px; display: flex;
+    align-items: center; justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s;
   }
+  .mps-modal-close:hover { background: #f0f0f0; color: #333; }
+
+  /* Section headers */
+  .mps-modal-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    margin-top: 6px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+  }
+  .mps-modal-section svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: {{ block.settings.accent_color }};
+  }
+  .mps-modal-section span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+
   .mps-field { margin-bottom: 14px; }
   .mps-field label {
     display: block; font-size: 13px; font-weight: 600;
     margin-bottom: 4px; color: #333;
   }
   .mps-field input {
-    width: 100%; padding: 11px 14px; border: 1px solid #ddd;
-    border-radius: 8px; font-size: 15px; box-sizing: border-box;
+    width: 100%; padding: 13px 16px; border: 1.5px solid #ddd;
+    font-size: 15px; box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+    color: #111;
   }
-  .mps-field input:focus { outline: none; border-color: {{ block.settings.accent_color }}; box-shadow: 0 0 0 1px {{ block.settings.accent_color }}; }
+  .mps-field input:focus {
+    outline: none;
+    border-color: {{ block.settings.accent_color }};
+    box-shadow: 0 0 0 3px {{ block.settings.accent_color }}20;
+  }
+  .mps-field input:disabled {
+    background: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+  }
   .mps-field-row { display: flex; gap: 10px; }
   .mps-field-row .mps-field { flex: 1; }
   .mps-error { color: #d72c0d; font-size: 13px; margin-bottom: 10px; min-height: 18px; }
 
+  /* Modal submit with spinner */
+  .mps-modal-submit {
+    width: 100%; padding: 16px; margin-top: 4px;
+    background: {{ block.settings.button_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none; border-radius: 10px;
+    font-size: 17px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; min-height: 54px;
+  }
+  .mps-modal-submit:hover { opacity: 0.9; }
+  .mps-modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .mps-spinner {
+    animation: mps-spin 0.8s linear infinite;
+    width: 22px;
+    height: 22px;
+  }
+  @keyframes mps-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .mps-modal-trust {
+    text-align: center; margin-top: 12px;
+    font-size: 12px; color: #777;
+  }
+
   @media (max-width: 480px) {
     .mps-field-row { flex-direction: column; gap: 0; }
     .mps-modal { padding: 20px; width: 95%; }
+    .mps-modal-summary { flex-direction: column; text-align: center; }
+    .mps-modal-summary-right { text-align: center; }
   }
 </style>
 
@@ -167,6 +315,21 @@
   var appUrl = (container.dataset.appUrl || '').replace(/\/+$/, '');
   var productTitle = container.dataset.productTitle;
   var variantId = container.dataset.variantId;
+
+  /* Read modal config from data attributes */
+  var showAddress = container.dataset.showAddress !== 'false';
+  var showCity = container.dataset.showCity !== 'false';
+  var showPhone = container.dataset.showPhone !== 'false';
+  var showProvince = container.dataset.showProvince !== 'false';
+  var showPostal = container.dataset.showPostal !== 'false';
+  var modalBg = container.dataset.modalBg || '#ffffff';
+  var modalOverlay = container.dataset.modalOverlay || '#000000';
+  var modalTitle = container.dataset.modalTitle || 'Completa tus datos';
+  var modalSubtitle = container.dataset.modalSubtitle || 'Para recibir tu suscripcion en tu domicilio';
+  var modalRadius = (container.dataset.modalRadius || '16') + 'px';
+  var inputRadius = (container.dataset.inputRadius || '8') + 'px';
+
+  var hasShippingFields = showAddress || showCity || showProvince || showPostal;
 
   if (!appUrl) {
     container.innerHTML = '<p class="mps-load-error">Configura la App URL en los ajustes del bloque.</p>';
@@ -242,25 +405,65 @@
       html += '<div class="mps-trust">&#128274; {{ block.settings.trust_text }}</div>';
 
       /* Modal */
-      html += '<div class="mps-overlay" id="mps-overlay" role="dialog" aria-modal="true" aria-label="Datos de envio">';
-      html += '<div class="mps-modal">';
+      html += '<div class="mps-overlay" id="mps-overlay" role="dialog" aria-modal="true" aria-label="Datos de envio" style="background:' + modalOverlay + '80">';
+      html += '<div class="mps-modal" style="background:' + modalBg + ';border-radius:' + modalRadius + '">';
       html += '<button class="mps-modal-close" id="mps-modal-close" aria-label="Cerrar">&#10005;</button>';
-      html += '<div class="mps-modal-title" id="mps-modal-plan-name"></div>';
-      html += '<div class="mps-modal-subtitle" id="mps-modal-plan-desc"></div>';
+
+      /* Plan summary card */
+      html += '<div class="mps-modal-summary" id="mps-modal-summary"></div>';
+
+      /* Title & subtitle */
+      html += '<div class="mps-modal-title">' + esc(modalTitle) + '</div>';
+      html += '<div class="mps-modal-subtitle">' + esc(modalSubtitle) + '</div>';
+
       html += '<div class="mps-error" id="mps-modal-error" role="alert"></div>';
-      html += '<div class="mps-field"><label for="mps-email">Email *</label><input type="email" id="mps-email" placeholder="tu@email.com" autocomplete="email" required></div>';
-      html += '<div class="mps-field"><label for="mps-name">Nombre completo *</label><input type="text" id="mps-name" placeholder="Juan Perez" autocomplete="name" required></div>';
-      html += '<div class="mps-field"><label for="mps-address">Direccion *</label><input type="text" id="mps-address" placeholder="Av. Corrientes 1234, Piso 3" autocomplete="street-address" required></div>';
-      html += '<div class="mps-field-row">';
-      html += '<div class="mps-field"><label for="mps-city">Ciudad *</label><input type="text" id="mps-city" placeholder="CABA" autocomplete="address-level2" required></div>';
-      html += '<div class="mps-field"><label for="mps-province">Provincia</label><input type="text" id="mps-province" placeholder="Buenos Aires" autocomplete="address-level1"></div>';
+
+      /* Section: Datos personales */
+      html += '<div class="mps-modal-section">';
+      html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      html += '<span>Datos personales</span>';
       html += '</div>';
-      html += '<div class="mps-field-row">';
-      html += '<div class="mps-field"><label for="mps-postal">Codigo postal</label><input type="text" id="mps-postal" placeholder="1043" autocomplete="postal-code"></div>';
-      html += '<div class="mps-field"><label for="mps-phone">Telefono</label><input type="tel" id="mps-phone" placeholder="11-5555-1234" autocomplete="tel"></div>';
-      html += '</div>';
-      html += '<button class="mps-cta" id="mps-modal-submit">{{ block.settings.subscribe_button }}</button>';
-      html += '<div class="mps-trust" style="margin-top:12px">&#128274; Pago seguro via MercadoPago. Cancela cuando quieras.</div>';
+
+      html += '<div class="mps-field"><label for="mps-email">Email *</label><input type="email" id="mps-email" placeholder="tu@email.com" autocomplete="email" required style="border-radius:' + inputRadius + '"></div>';
+      html += '<div class="mps-field"><label for="mps-name">Nombre completo *</label><input type="text" id="mps-name" placeholder="Juan Perez" autocomplete="name" required style="border-radius:' + inputRadius + '"></div>';
+
+      if (showPhone) {
+        html += '<div class="mps-field"><label for="mps-phone">Telefono</label><input type="tel" id="mps-phone" placeholder="11-5555-1234" autocomplete="tel" style="border-radius:' + inputRadius + '"></div>';
+      }
+
+      /* Section: Datos de envio (only if at least 1 shipping field visible) */
+      if (hasShippingFields) {
+        html += '<div class="mps-modal-section" style="margin-top:10px">';
+        html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>';
+        html += '<span>Datos de envio</span>';
+        html += '</div>';
+
+        if (showAddress) {
+          html += '<div class="mps-field"><label for="mps-address">Direccion</label><input type="text" id="mps-address" placeholder="Av. Corrientes 1234, Piso 3" autocomplete="street-address" style="border-radius:' + inputRadius + '"></div>';
+        }
+
+        /* City + Province row */
+        var cityProvinceRow = showCity && showProvince;
+        if (cityProvinceRow) {
+          html += '<div class="mps-field-row">';
+        }
+        if (showCity) {
+          html += '<div class="mps-field"><label for="mps-city">Ciudad</label><input type="text" id="mps-city" placeholder="CABA" autocomplete="address-level2" style="border-radius:' + inputRadius + '"></div>';
+        }
+        if (showProvince) {
+          html += '<div class="mps-field"><label for="mps-province">Provincia</label><input type="text" id="mps-province" placeholder="Buenos Aires" autocomplete="address-level1" style="border-radius:' + inputRadius + '"></div>';
+        }
+        if (cityProvinceRow) {
+          html += '</div>';
+        }
+
+        if (showPostal) {
+          html += '<div class="mps-field" style="max-width:180px"><label for="mps-postal">Codigo postal</label><input type="text" id="mps-postal" placeholder="1043" autocomplete="postal-code" style="border-radius:' + inputRadius + '"></div>';
+        }
+      }
+
+      html += '<button class="mps-modal-submit" id="mps-modal-submit">{{ block.settings.subscribe_button }}</button>';
+      html += '<div class="mps-modal-trust">&#128274; Pago seguro via MercadoPago. Cancela cuando quieras.</div>';
       html += '</div></div>';
 
       container.innerHTML = html;
@@ -295,6 +498,26 @@
         });
       });
 
+      /* Modal open/close with animation */
+      var overlay = document.getElementById('mps-overlay');
+
+      function openModal() {
+        overlay.classList.add('open');
+        /* Trigger reflow before adding visible class for animation */
+        void overlay.offsetHeight;
+        overlay.classList.add('visible');
+        var emailField = document.getElementById('mps-email');
+        if (emailField) emailField.focus();
+      }
+
+      function closeModal() {
+        overlay.classList.remove('visible');
+        setTimeout(function() {
+          overlay.classList.remove('open');
+        }, 300);
+        document.getElementById('mps-modal-error').textContent = '';
+      }
+
       /* CTA click */
       cta.addEventListener('click', function() {
         if (selectedType === 'onetime') {
@@ -308,26 +531,35 @@
           if (!plansData) return;
           var plan = plansData.find(function(p) { return p.id === selectedPlanId; });
           if (!plan) return;
-          document.getElementById('mps-modal-plan-name').textContent = plan.name + ' - ' + productTitle;
-          var freqMap2 = { months: 'mes', days: 'dias', weeks: 'semanas' };
-          document.getElementById('mps-modal-plan-desc').textContent = '$' + plan.amount.toLocaleString() + '/' + (freqMap2[plan.frequencyType] || plan.frequencyType) + ' · ' + plan.quantity + ' un.';
-          document.getElementById('mps-overlay').classList.add('open');
-          document.getElementById('mps-email').focus();
+
+          /* Populate plan summary card */
+          var summaryEl = document.getElementById('mps-modal-summary');
+          var freqMap2 = { months: 'mes', days: 'dias', weeks: 'semanas', years: 'ano' };
+          var freqText = plan.frequency + ' ' + (freqMap2[plan.frequencyType] || plan.frequencyType);
+          var disc = plan.originalPrice > 0 ? Math.round((1 - plan.amount / plan.originalPrice) * 100) : 0;
+
+          var summaryHtml = '<div class="mps-modal-summary-left">';
+          if (disc > 0) summaryHtml += '<span class="mps-modal-summary-badge">' + disc + '% OFF</span>';
+          summaryHtml += '<span class="mps-modal-summary-name">' + esc(plan.name) + '</span>';
+          summaryHtml += '<span class="mps-modal-summary-freq">' + esc(plan.quantity + ' un. / ' + freqText) + '</span>';
+          summaryHtml += '</div>';
+          summaryHtml += '<div class="mps-modal-summary-right">';
+          summaryHtml += '<div class="mps-modal-summary-price">$' + plan.amount.toLocaleString() + '<span style="font-size:13px;font-weight:400">/' + (freqMap2[plan.frequencyType] || plan.frequencyType) + '</span></div>';
+          if (plan.originalPrice > 0) summaryHtml += '<div class="mps-modal-summary-original">$' + plan.originalPrice.toLocaleString() + '</div>';
+          summaryHtml += '</div>';
+          summaryEl.innerHTML = summaryHtml;
+
+          openModal();
         }
       });
 
-      /* Modal close */
-      function closeModal() {
-        document.getElementById('mps-overlay').classList.remove('open');
-        document.getElementById('mps-modal-error').textContent = '';
-      }
-
+      /* Modal close handlers */
       document.getElementById('mps-modal-close').addEventListener('click', closeModal);
-      document.getElementById('mps-overlay').addEventListener('click', function(e) {
+      overlay.addEventListener('click', function(e) {
         if (e.target === this) closeModal();
       });
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && document.getElementById('mps-overlay').classList.contains('open')) {
+        if (e.key === 'Escape' && overlay.classList.contains('open')) {
           closeModal();
         }
       });
@@ -340,20 +572,27 @@
 
         var email = document.getElementById('mps-email').value.trim();
         var name = document.getElementById('mps-name').value.trim();
-        var address = document.getElementById('mps-address').value.trim();
-        var city = document.getElementById('mps-city').value.trim();
-        var province = document.getElementById('mps-province').value.trim();
-        var postal = document.getElementById('mps-postal').value.trim();
-        var phone = document.getElementById('mps-phone').value.trim();
+        var addressEl = document.getElementById('mps-address');
+        var cityEl = document.getElementById('mps-city');
+        var provinceEl = document.getElementById('mps-province');
+        var postalEl = document.getElementById('mps-postal');
+        var phoneEl = document.getElementById('mps-phone');
 
-        /* Validation */
+        var address = addressEl ? addressEl.value.trim() : '';
+        var city = cityEl ? cityEl.value.trim() : '';
+        var province = provinceEl ? provinceEl.value.trim() : '';
+        var postal = postalEl ? postalEl.value.trim() : '';
+        var phone = phoneEl ? phoneEl.value.trim() : '';
+
+        /* Validation — only email and name are always required */
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.textContent = 'Ingresa un email valido.'; document.getElementById('mps-email').focus(); return; }
         if (!name || name.length < 2) { errorEl.textContent = 'Ingresa tu nombre completo.'; document.getElementById('mps-name').focus(); return; }
-        if (!address) { errorEl.textContent = 'Ingresa tu direccion de envio.'; document.getElementById('mps-address').focus(); return; }
-        if (!city) { errorEl.textContent = 'Ingresa tu ciudad.'; document.getElementById('mps-city').focus(); return; }
 
+        /* Loading state */
         btn.disabled = true;
-        btn.textContent = 'Procesando...';
+        btn.innerHTML = '<svg class="mps-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" opacity=".3"/><path d="M12 2v4"/></svg>';
+        var allInputs = container.querySelectorAll('.mps-modal input');
+        allInputs.forEach(function(i) { i.disabled = true; });
 
         fetch(appUrl + '/api/subscription', {
           method: 'POST',
@@ -382,13 +621,15 @@
           } else {
             errorEl.textContent = result.error || 'Error al crear la suscripcion.';
             btn.disabled = false;
-            btn.textContent = '{{ block.settings.subscribe_button }}';
+            btn.innerHTML = '{{ block.settings.subscribe_button }}';
+            allInputs.forEach(function(i) { i.disabled = false; });
           }
         })
         .catch(function(err) {
           errorEl.textContent = err.message || 'Error de conexion. Intenta de nuevo.';
           btn.disabled = false;
-          btn.textContent = '{{ block.settings.subscribe_button }}';
+          btn.innerHTML = '{{ block.settings.subscribe_button }}';
+          allInputs.forEach(function(i) { i.disabled = false; });
         });
       });
     })
@@ -486,6 +727,80 @@
       "id": "margin_bottom",
       "label": "Margen inferior",
       "min": 0, "max": 60, "step": 4, "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Modal de suscripcion"
+    },
+    {
+      "type": "text",
+      "id": "modal_title",
+      "label": "Titulo del modal",
+      "default": "Completa tus datos"
+    },
+    {
+      "type": "text",
+      "id": "modal_subtitle",
+      "label": "Subtitulo del modal",
+      "default": "Para recibir tu suscripcion en tu domicilio"
+    },
+    {
+      "type": "color",
+      "id": "modal_bg_color",
+      "label": "Fondo del modal",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "modal_overlay_color",
+      "label": "Color del overlay",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "modal_border_radius",
+      "label": "Redondeo del modal",
+      "min": 0, "max": 24, "step": 2, "default": 16
+    },
+    {
+      "type": "range",
+      "id": "input_border_radius",
+      "label": "Redondeo de inputs",
+      "min": 0, "max": 16, "step": 2, "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Campos visibles"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_address",
+      "label": "Mostrar campo direccion",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_city",
+      "label": "Mostrar campo ciudad",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_province",
+      "label": "Mostrar campo provincia",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_postal",
+      "label": "Mostrar campo codigo postal",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_phone",
+      "label": "Mostrar campo telefono",
+      "default": true
     }
   ]
 }

@@ -390,3 +390,292 @@
   height: 20px;
   color: var(--p-color-text-subdued, #9ca3af);
 }
+
+/* ─── Setup Guide ─────────────────────────────── */
+.setup-guide {
+  border-radius: var(--p-border-radius-300, 12px);
+  background: var(--p-color-bg-surface, #fff);
+  border: 1px solid var(--p-color-border-subdued, #e1e3e5);
+  padding: 24px;
+}
+
+.setup-guide-header {
+  margin-bottom: 16px;
+}
+
+.setup-guide-title {
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--p-color-text, #111);
+}
+
+.setup-guide-subtitle {
+  font-size: 13px;
+  color: var(--p-color-text-subdued, #6b7280);
+  margin-top: 2px;
+}
+
+.setup-guide-progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--p-color-bg-surface-secondary, #e5e7eb);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.setup-guide-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  transition: width 0.4s ease;
+}
+
+.setup-guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.setup-guide-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--p-color-border-subdued, #f1f1f1);
+}
+
+.setup-guide-step:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.setup-guide-step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--p-color-bg-surface-secondary, #f3f4f6);
+  color: var(--p-color-text-subdued, #6b7280);
+  border: 2px solid var(--p-color-border-subdued, #e1e3e5);
+}
+
+.setup-guide-step--done .setup-guide-step-icon {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.setup-guide-step-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.setup-guide-step-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.setup-guide-step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--p-color-text, #111);
+}
+
+.setup-guide-step--done .setup-guide-step-title {
+  color: var(--p-color-text-subdued, #9ca3af);
+}
+
+.setup-guide-step-desc {
+  font-size: 12px;
+  color: var(--p-color-text-subdued, #6b7280);
+  margin-top: 2px;
+}
+
+.setup-guide-step-action {
+  flex-shrink: 0;
+}
+
+.setup-guide-btn {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--p-color-bg-fill-brand, #008060);
+  color: var(--p-color-text-on-fill, #fff);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.setup-guide-btn:hover {
+  opacity: 0.9;
+}
+
+.setup-guide-btn--secondary {
+  background: var(--p-color-bg-surface-secondary, #f3f4f6);
+  color: var(--p-color-text, #111);
+}
+
+.setup-guide-btn--secondary:hover {
+  background: var(--p-color-bg-surface-tertiary, #e5e7eb);
+}
+
+/* ─── Plan Preview Card ───────────────────────── */
+.plan-preview-card {
+  border: 2px solid var(--p-color-border-subdued, #e1e3e5);
+  border-radius: var(--p-border-radius-200, 10px);
+  padding: 20px;
+  position: relative;
+  text-align: center;
+}
+
+.plan-preview-card--mini {
+  max-width: 220px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.plan-preview-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  margin-bottom: 8px;
+}
+
+.plan-preview-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--p-color-text, #111);
+  margin-bottom: 8px;
+}
+
+.plan-preview-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.plan-preview-original {
+  font-size: 13px;
+  color: var(--p-color-text-subdued, #9ca3af);
+  text-decoration: line-through;
+}
+
+.plan-preview-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--p-color-text, #111);
+}
+
+.plan-preview-freq {
+  font-size: 13px;
+  color: var(--p-color-text-subdued, #6b7280);
+}
+
+.plan-preview-desc {
+  font-size: 12px;
+  color: var(--p-color-text-subdued, #6b7280);
+  margin-bottom: 4px;
+}
+
+.plan-preview-qty {
+  font-size: 12px;
+  color: var(--p-color-text-subdued, #9ca3af);
+  margin-bottom: 12px;
+}
+
+.plan-preview-btn {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--p-color-bg-fill-brand, #008060);
+  color: var(--p-color-text-on-fill, #fff);
+  pointer-events: none;
+}
+
+/* ─── Plan Form Discount Banner ───────────────── */
+.plan-form-discount-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--p-border-radius-200, 8px);
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.plan-form-discount-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #10b981;
+  color: #fff;
+}
+
+/* ─── Plans Empty State ───────────────────────── */
+.plans-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+  gap: 12px;
+}
+
+.plans-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--p-color-bg-surface-secondary, #f6f6f7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--p-color-text-subdued, #9ca3af);
+}
+
+.plans-empty-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.plans-empty-title {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--p-color-text, #111);
+}
+
+.plans-empty-desc {
+  font-size: 13px;
+  color: var(--p-color-text-subdued, #6b7280);
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.plans-empty-example {
+  margin: 8px 0 12px;
+}
+
+.plans-empty-example-label {
+  font-size: 12px;
+  color: var(--p-color-text-subdued, #9ca3af);
+  margin-bottom: 8px;
+}

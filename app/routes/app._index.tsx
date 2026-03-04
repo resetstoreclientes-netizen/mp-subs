@@ -7,11 +7,11 @@ import {
   BlockStack,
   Text,
   InlineGrid,
-  Banner,
   IndexTable,
   Badge,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
+import { useState, useEffect } from "react";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { KpiCard } from "../components/charts/KpiCard";
@@ -19,7 +19,7 @@ import { RevenueChart } from "../components/charts/RevenueChart";
 import { PlanDistribution } from "../components/charts/PlanDistribution";
 import { StatusDonut } from "../components/charts/StatusDonut";
 import { ActivityFeed } from "../components/charts/ActivityFeed";
-import "../styles/dashboard.css";
+import { SetupGuide } from "../components/charts/SetupGuide";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
@@ -39,6 +39,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     newThisMonth,
     newLastMonth,
     cancelledThisMonth,
+    plansCount,
   ] = await Promise.all([
     db.settings.findUnique({ where: { shop } }),
 
@@ -80,6 +81,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     db.subscriptionEvent.count({
       where: { shop, type: "cancelled", createdAt: { gte: firstDayThisMonth } },
     }),
+
+    db.plan.count({ where: { shop } }),
   ]);
 
   const isConfigured = !!settings?.mpAccessToken;
@@ -106,6 +109,25 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Revenue
   const totalRevenue = paymentEvents.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  // ARPU (Average Revenue Per User)
+  const arpu = activeSubs.length > 0 ? totalRevenue / activeSubs.length : 0;
+
+  // Average subscription age (days)
+  const avgAgeDays =
+    activeSubs.length > 0
+      ? activeSubs.reduce((sum, s) => {
+          const days = (now.getTime() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+          return sum + days;
+        }, 0) / activeSubs.length
+      : 0;
+
+  // Upcoming collections next 30 days (estimated: active subs * plan amount)
+  const upcomingCollections = activeSubs.reduce((sum, s) => sum + s.plan.amount, 0);
+
+  // Average lifetime revenue per subscriber
+  const avgLifetimeRevenue =
+    allSubscriptions.length > 0 ? totalRevenue / allSubscriptions.length : 0;
 
   // Revenue por mes (6 meses)
   const revenueByMonth: { month: string; revenue: number }[] = [];
@@ -193,8 +215,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     };
   });
 
+  const setupState = {
+    hasMercadoPago: isConfigured,
+    hasPlans: plansCount > 0,
+    hasFirstSale: allSubscriptions.length > 0,
+  };
+  const setupComplete =
+    setupState.hasMercadoPago && setupState.hasPlans && setupState.hasFirstSale;
+
   return json({
     isConfigured,
+    setupState,
+    setupComplete,
     mrr,
     previousMrr,
     activeSubsCount: activeSubs.length,
@@ -203,6 +235,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     newLastMonth,
     churnRate,
     totalRevenue,
+    arpu,
+    avgAgeDays: Math.round(avgAgeDays),
+    upcomingCollections,
+    avgLifetimeRevenue,
     revenueByMonth,
     subsByPlan,
     subsByStatus,
@@ -237,6 +273,8 @@ function StatusBadge({ status }: { status: string }) {
 export default function Dashboard() {
   const {
     isConfigured,
+    setupState,
+    setupComplete,
     mrr,
     previousMrr,
     activeSubsCount,
@@ -245,6 +283,10 @@ export default function Dashboard() {
     newLastMonth,
     churnRate,
     totalRevenue,
+    arpu,
+    avgAgeDays,
+    upcomingCollections,
+    avgLifetimeRevenue,
     revenueByMonth,
     subsByPlan,
     subsByStatus,
@@ -254,17 +296,32 @@ export default function Dashboard() {
     recentSubs,
   } = useLoaderData<typeof loader>();
 
+  const [themeSetupDone, setThemeSetupDone] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("mp-subs-theme-setup-done");
+    if (stored === "true") setThemeSetupDone(true);
+  }, []);
+
+  const handleMarkThemeDone = () => {
+    localStorage.setItem("mp-subs-theme-setup-done", "true");
+    setThemeSetupDone(true);
+  };
+
+  const allSetupDone = setupComplete && themeSetupDone;
+
   return (
     <Page>
       <TitleBar title="MP Suscripciones" />
       <BlockStack gap="500">
-        {!isConfigured && (
-          <Banner tone="warning" action={{ content: "Configurar", url: "/app/settings" }}>
-            <p>
-              MercadoPago no esta configurado. Ingresa tus credenciales para
-              empezar a recibir suscripciones.
-            </p>
-          </Banner>
+        {!allSetupDone && (
+          <SetupGuide
+            hasMercadoPago={setupState.hasMercadoPago}
+            hasPlans={setupState.hasPlans}
+            hasThemeSetup={themeSetupDone}
+            hasFirstSale={setupState.hasFirstSale}
+            onMarkThemeDone={handleMarkThemeDone}
+          />
         )}
 
         {/* KPI Cards */}
@@ -303,6 +360,41 @@ export default function Dashboard() {
             icon="churn"
             invertTrend
             subtitle={churnRate === 0 ? "sin cancelaciones" : undefined}
+          />
+        </InlineGrid>
+
+        {/* Secondary KPIs */}
+        <InlineGrid columns={{ xs: 1, sm: 2, lg: 4 }} gap="400">
+          <KpiCard
+            title="ARPU"
+            value={arpu}
+            format="currency"
+            accent="green"
+            icon="arpu"
+            subtitle="ingreso promedio por usuario"
+          />
+          <KpiCard
+            title="Recolecciones prox. 30 dias"
+            value={upcomingCollections}
+            format="currency"
+            accent="blue"
+            icon="calendar"
+            subtitle="estimado"
+          />
+          <KpiCard
+            title="Edad promedio"
+            value={avgAgeDays === 0 ? "N/A" : `${avgAgeDays} dias`}
+            accent="purple"
+            icon="clock"
+            subtitle="de suscripciones activas"
+          />
+          <KpiCard
+            title="Ingresos promedio de vida"
+            value={avgLifetimeRevenue}
+            format="currency"
+            accent="amber"
+            icon="lifetime"
+            subtitle="por suscriptor"
           />
         </InlineGrid>
 

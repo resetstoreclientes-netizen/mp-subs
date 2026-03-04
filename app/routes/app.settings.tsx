@@ -13,20 +13,23 @@ import {
   Text,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
+import { Link } from "@remix-run/react";
 import { useState } from "react";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
-  const settings = await db.settings.findUnique({
-    where: { shop: session.shop },
-  });
+  const [settings, plansCount] = await Promise.all([
+    db.settings.findUnique({ where: { shop: session.shop } }),
+    db.plan.count({ where: { shop: session.shop } }),
+  ]);
 
   return json({
     mpAccessToken: settings?.mpAccessToken || "",
     mpPublicKey: settings?.mpPublicKey || "",
     webhookSecret: settings?.webhookSecret || "",
+    plansCount,
   });
 };
 
@@ -87,7 +90,22 @@ export default function SettingsPage() {
           <BlockStack gap="500">
             {actionData && "success" in actionData && (
               <Banner tone="success">
-                <p>Credenciales guardadas correctamente.</p>
+                <BlockStack gap="300">
+                  <p>Credenciales guardadas correctamente.</p>
+                  {loaderData.plansCount === 0 ? (
+                    <p>
+                      <Link to="/app/plans" style={{ fontWeight: 600 }}>
+                        Siguiente paso: Crear tu primer plan →
+                      </Link>
+                    </p>
+                  ) : (
+                    <p>
+                      <Link to="/app" style={{ fontWeight: 600 }}>
+                        Volver al Dashboard →
+                      </Link>
+                    </p>
+                  )}
+                </BlockStack>
               </Banner>
             )}
             {actionData && "error" in actionData && (
@@ -100,17 +118,20 @@ export default function SettingsPage() {
                 <Text as="h2" variant="headingMd">
                   Credenciales de MercadoPago
                 </Text>
-                <Text as="p" variant="bodyMd">
-                  Ingresa tus credenciales de MercadoPago. Las encontras en{" "}
-                  <a
-                    href="https://www.mercadopago.com.ar/developers/panel/app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    tu panel de desarrollador
-                  </a>
-                  .
-                </Text>
+                <Banner tone="info">
+                  <BlockStack gap="200">
+                    <Text as="p" variant="bodyMd" fontWeight="semibold">Como obtener tus credenciales:</Text>
+                    <Text as="p" variant="bodyMd">
+                      1. Ingresa a{" "}
+                      <a href="https://www.mercadopago.com.ar/developers/panel/app" target="_blank" rel="noopener noreferrer">
+                        mercadopago.com.ar/developers
+                      </a>
+                    </Text>
+                    <Text as="p" variant="bodyMd">2. Selecciona tu aplicacion (o crea una nueva)</Text>
+                    <Text as="p" variant="bodyMd">3. Ve a "Credenciales de produccion" (o "de prueba" para testear)</Text>
+                    <Text as="p" variant="bodyMd">4. Copia el Access Token y la Public Key</Text>
+                  </BlockStack>
+                </Banner>
                 <FormLayout>
                   <TextField
                     label="Access Token"
