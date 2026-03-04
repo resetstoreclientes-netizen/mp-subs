@@ -49,14 +49,8 @@ export async function createSubscription({
       transaction_amount: amount,
       currency_id: currency,
     },
+    payer_email: payerEmail,
   };
-
-  // Solo incluir payer_email si es un email real (no de test users MP)
-  // MP rechaza con "Cannot operate between different countries" si el
-  // payer es de un entorno distinto al seller
-  if (payerEmail && !payerEmail.includes("@testuser.com")) {
-    body.payer_email = payerEmail;
-  }
 
   if (notificationUrl) {
     body.notification_url = notificationUrl;
