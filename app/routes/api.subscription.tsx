@@ -102,8 +102,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }, { headers: corsHeaders });
   } catch (error) {
     console.error("Error creating subscription:", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
     return json(
-      { error: "Error al crear la suscripcion. Intenta de nuevo." },
+      { error: `Error al crear la suscripcion: ${errMsg}` },
       { status: 500, headers: corsHeaders },
     );
   }
