@@ -125,9 +125,35 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
+  const debug = url.searchParams.get("debug");
 
   if (!shop) {
     return json({ error: "shop parameter required" }, { status: 400, headers: corsHeaders });
+  }
+
+  // Diagnóstico temporal: verificar país de las credenciales MP
+  if (debug === "mp") {
+    const settings = await db.settings.findUnique({ where: { shop } });
+    if (!settings) {
+      return json({ error: "No settings found" }, { headers: corsHeaders });
+    }
+    try {
+      const res = await fetch("https://api.mercadopago.com/users/me", {
+        headers: { Authorization: `Bearer ${settings.mpAccessToken}` },
+      });
+      const data = await res.json();
+      return json({
+        mpUser: {
+          id: data.id,
+          site_id: data.site_id,
+          country_id: data.country_id,
+          nickname: data.nickname,
+          email: data.email,
+        },
+      }, { headers: corsHeaders });
+    } catch (e) {
+      return json({ error: "MP API error", detail: String(e) }, { headers: corsHeaders });
+    }
   }
 
   const plans = await db.plan.findMany({
